@@ -1,4 +1,4 @@
-function [Sr, L] = GL_SigRep(So, alpha, beta, max_iter)
+function [Y, L] = GL_SigRep(X, alpha, beta, max_iter)
 %% Using GL_SigRep algorithm to estimate underlying 
 % graph Laplacian and denoised real graph signal matrix
 % So: Signal Observed, N-by-K matrix
@@ -11,10 +11,9 @@ function [Sr, L] = GL_SigRep(So, alpha, beta, max_iter)
 % L: Laplacian estimated, N-by-N square matrix
 
 %% Initialization
-[n,~] = size(So);
-Sr = So;
-L = zeros(n,n);
-lh = sym2vech(L);
+[n,~] = size(X);
+Y = X;
+Z = zeros(n);
 I = eye(n);
 Md = dupmat(n);
 
@@ -29,31 +28,22 @@ B = [B; (mat2vec(I))']; % tr(L) = n
 B = B*Md;
 b = zeros(n+1,1);
 b(n+1) = n;
+vYY = mat2vec(Y*Y');
 
-% Target function parametres
-p1 = alpha*(mat2vec(Sr*Sr'))'*Md;
-p2 = beta*(Md'*Md);
 
 %% Estimation Iterations
-for i = 1:max_iter
-    
-% Calculating L, using Interior Point Method(IPM)
-% Or using quadprog()
-lh = quadprog(2*p2,p1,A,a,B,b);
-Lnew = vec2squ(Md*lh);
-% Calculating Y
-Sr_new = (I + alpha.*Lnew)\So;
-%Updating p1 parametre
-p1 = alpha*(mat2vec(Sr_new*Sr_new'))'*Md;
 
-% Checking terminating condition
-err1 = norm(Lnew - L);
-err2 = norm(Sr_new - Sr);
-Sr = Sr_new;
-L = Lnew;
-    if err1 < 1e-6 && err2 < 1e-6
-        break;
-    end
-end
-end
+cvx_begin
+    variable l((1+n)*n/2)
+    minimise (alpha*vYY'*Md*l + beta*l'*Md'*Md*l)
+    subject to
+    A*l <= a
+    B*l == b
+cvx_end
+
+L = vec2mat(Md*l, n);
+%for i = 1:max_iter
+   
+
+%end
 
