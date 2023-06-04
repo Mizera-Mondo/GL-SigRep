@@ -2,6 +2,9 @@
 **G**raph **L**earning - **Sig**nal **Rep**resentation
 A brief implementation of effective graph topology learning algorithm GL-SigRep.
 
+# TODO
+1. Finish GL-SigRep.m
+
 # Dependencies
 Please ensure to add the dependencies to the path of MATLAB before running the demo.
 
