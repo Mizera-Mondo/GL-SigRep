@@ -25,19 +25,27 @@ L = diag(sum(A)) - A;
 stmls = randn(Nv, Ls);
 S = (A - eye(Nv))\stmls;
 %% Calling GL_SigRep to estimate Laplacian
-[Sr, Le] = GL_SigRep_CVX(S, 0.1, 20, max_iter);
-
+disp('SigRep with quadprog')
+tic
+[Sr, Le] = GL_SigRep(S, 0.1, 20, max_iter);
+toc
+disp('SigRep with CVX');
+tic
+[Sr_CVX, Le_CVX] = GL_SigRep_CVX(S, 0.1, 20, max_iter);
+toc
 %% Ploting
 close all;
+
 figure;
+subplot(2, 3, 1)
 G = graph(A);
 pG = plot(G);
 pG.LineWidth = 5*G.Edges.Weight/max(G.Edges.Weight);
 title('Raw Graph');
-figure;
+subplot(2, 3, 4)
 imagesc(L);
 title('Raw Laplacian');
-figure;
+subplot(2, 3, 2)
 Ae = -(Le-diag(diag(Le)));
 Ae(abs(Ae) < 1e-5) = 0;
 Ge = graph(Ae);
@@ -45,7 +53,21 @@ pGe = plot(Ge);
 pGe.XData = pG.XData;
 pGe.YData = pG.YData;
 pGe.LineWidth = 5*Ge.Edges.Weight/max(Ge.Edges.Weight);
-title('Estimated Graph');
-figure;
+title('Estimated Graph with quadprog');
+subplot(2, 3, 5)
 imagesc(Le);
-title('Estimated Laplacian');
+title('Estimated Laplacian with quadprog');
+
+
+subplot(2, 3, 3)
+Ae_CVX = -(Le_CVX-diag(diag(Le_CVX)));
+Ae_CVX(abs(Ae_CVX) < 1e-5) = 0;
+Ge_CVX = graph(Ae_CVX);
+pGe_CVX = plot(Ge_CVX);
+pGe_CVX.XData = pG.XData;
+pGe_CVX.YData = pG.YData;
+pGe_CVX.LineWidth = 5*Ge_CVX.Edges.Weight/max(Ge_CVX.Edges.Weight);
+title('Estimated Graph with CVX');
+subplot(2, 3, 6)
+imagesc(Le_CVX);
+title('Estimated Laplacian with CVX');
