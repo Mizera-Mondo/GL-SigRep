@@ -1,4 +1,4 @@
-function [Y, L] = GL_SigRep(X, alpha, beta, max_iter)
+function [Y, L] = GL_SigRep_CVX(X, alpha, beta, max_iter)
 %% Using GL_SigRep algorithm to estimate underlying 
 % graph Laplacian and denoised real graph signal matrix
 % So: Signal Observed, N-by-K matrix
@@ -28,22 +28,34 @@ B = [B; (mat2vec(I))']; % tr(L) = n
 B = B*Md;
 b = zeros(n+1,1);
 b(n+1) = n;
-vYY = mat2vec(Y*Y');
+
 
 
 %% Estimation Iterations
+L = randn(n);
 
-cvx_begin
-    variable l((1+n)*n/2)
-    minimise (alpha*vYY'*Md*l + beta*l'*Md'*Md*l)
-    subject to
-    A*l <= a
-    B*l == b
-cvx_end
+for i = 1:max_iter
+    L_old = L;
+    Y_old = Y;
+    vYY = mat2vec(Y*Y');
+    % Sub-problem of L with CVX
+    cvx_begin quiet
+        variable l((1+n)*n/2)
+        minimise (alpha*vYY'*Md*l + beta*l'*Md'*Md*l)
+        subject to
+        A*l <= a
+        B*l == b
+    cvx_end
+    L = vec2mat(Md*l, n);
+    
+    % Sub-problem of Y
+    Y = (I + alpha.*L)\X;
 
-L = vec2mat(Md*l, n);
-%for i = 1:max_iter
-   
-
-%end
-
+    % Checking terminating condition
+    err1 = norm(L - L_old, 'fro');
+    err2 = norm(Y - Y_old, 'fro');
+    if err1 < 1e-6 && err2 < 1e-6
+        break;
+    end
+end
+end

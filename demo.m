@@ -1,5 +1,5 @@
 close all;
-clc;
+% clc;
 clear;
 Nv = 30;
 Ne = 50;
@@ -25,7 +25,7 @@ L = diag(sum(A)) - A;
 stmls = randn(Nv, Ls);
 S = (A - eye(Nv))\stmls;
 %% Calling GL_SigRep to estimate Laplacian
-[Sr, Le] = GL_SigRep(S,0.1,10,max_iter);
+[Sr, Le] = GL_SigRep_CVX(S, 0.1, 20, max_iter);
 
 %% Ploting
 close all;
